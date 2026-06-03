@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+Breaking changes:
+
+- `register_users::shared_secret_register::v1` now mirrors the full Synapse
+  `/_synapse/admin/v1/register` surface. On the request, `displayname` is now optional and
+  `user_type`, `inhibit_login`, `refresh_token`, `device_id` and `initial_device_display_name`
+  were added. On the response, `access_token` and `device_id` are now optional and
+  `refresh_token` and `expires_in_ms` were added. `Request::new` and `Response::new` now take
+  only the required fields.
+- The optional `hmac` helper takes a `user_type` argument and folds it into the MAC, matching
+  Synapse.
+
 ## 0.11.0
 
 Breaking changes:
