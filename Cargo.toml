@@ -19,7 +19,7 @@ shared-secret-registration-mac = ["dep:hex", "dep:hmac", "dep:sha1"]
 [dependencies]
 hex = { version = "0.4.3", optional = true }
 hmac = { version = "0.12.1", optional = true }
-ruma = { git = "https://github.com/matrix-construct/ruma", rev = "0b7aad2371a7b51a8226d819b544c1ca9edeb696", features = ["api", "events"] }
+ruma = { git = "https://github.com/matrix-construct/ruma", rev = "236d1ed911d5dc4f1240fae3ab8f37fdea0a087a", features = ["api", "events"] }
 serde = { version = "1.0.118", features = ["derive"] }
 sha1 = { version = "0.10.1", optional = true }
 
