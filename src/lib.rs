@@ -26,6 +26,7 @@ use std::fmt;
 pub mod account_validity;
 pub mod background_updates;
 pub mod experimental_features;
+pub mod mas;
 pub mod register_users;
 pub mod room_membership;
 pub mod rooms;

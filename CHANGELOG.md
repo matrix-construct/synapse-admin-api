@@ -13,6 +13,18 @@ Breaking changes:
 - The optional `hmac` helper takes a `user_type` argument and folds it into the MAC, matching
   Synapse.
 
+Improvements:
+
+- Add a `mas` module covering the twelve unversioned `/_synapse/mas/*` provisioning endpoints the
+  Matrix Authentication Service calls on its homeserver (`query_user`, `provision_user`,
+  `is_localpart_available`, `delete_user`, `reactivate_user`, `set_displayname`,
+  `unset_displayname`, `allow_cross_signing_reset`, `upsert_device`, `delete_device`,
+  `update_device_display_name`, `sync_devices`). The bearer is MAS's shared secret, validated in
+  the handler layer, so every endpoint carries `NoAuthentication`. `provision_user` and
+  `upsert_device` answer `201` on create and `200` on update, and `delete_device` answers `204`;
+  the `#[response]` macro always emits `200`, so those three responses hand-roll `OutgoingResponse`
+  and `IncomingResponse` to carry the status.
+
 ## 0.11.0
 
 Breaking changes:
