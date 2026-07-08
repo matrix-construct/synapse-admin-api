@@ -25,11 +25,21 @@ use std::fmt;
 
 pub mod account_validity;
 pub mod background_updates;
+pub mod devices;
+pub mod events;
 pub mod experimental_features;
+pub mod federation;
 pub mod mas;
+pub mod media;
+pub mod purge_history;
 pub mod register_users;
+pub mod registration_tokens;
 pub mod room_membership;
 pub mod rooms;
+pub mod scheduled_tasks;
+pub mod server_notices;
+pub mod statistics;
+pub mod username_available;
 pub mod users;
 pub mod version;
 
