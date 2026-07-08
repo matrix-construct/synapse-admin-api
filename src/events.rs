@@ -1,1 +1,3 @@
-//! Endpoints in the `/_synapse/admin/v<x>/rooms/:room_id/` scope for fetching individual events.
+//! Endpoints in the `/_synapse/admin/v<x>/fetch_event/` scope for fetching individual events.
+
+pub mod fetch_event;
