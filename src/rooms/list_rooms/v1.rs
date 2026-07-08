@@ -44,6 +44,20 @@ pub struct Request {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[ruma_api(query)]
     pub search_term: Option<String>,
+
+    /// Filter rooms by whether they are published in the room directory.
+    ///
+    /// Defaults to no filtering.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ruma_api(query)]
+    pub public_rooms: Option<bool>,
+
+    /// Filter rooms by whether they have no local users joined.
+    ///
+    /// Defaults to no filtering.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ruma_api(query)]
+    pub empty_rooms: Option<bool>,
 }
 
 #[derive(Default)]
@@ -59,9 +73,15 @@ pub struct Response {
     pub total_rooms: UInt,
 
     /// Token to receive the next RoomDetails batch.
+    ///
+    /// Omitted when there is no further batch.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub next_batch: Option<UInt>,
 
     /// Token to receive the previous RoomDetails batch.
+    ///
+    /// Omitted when there is no previous batch.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub prev_batch: Option<UInt>,
 }
 
@@ -122,6 +142,12 @@ pub enum RoomSortOrder {
 
     /// Sort by state events
     StateEvents,
+
+    /// Deprecated alias of [`Name`](Self::Name), still accepted on input.
+    Alphabetical,
+
+    /// Deprecated alias of [`JoinedMembers`](Self::JoinedMembers), still accepted on input.
+    Size,
 
     #[doc(hidden)]
     _Custom(crate::PrivOwnedStr),

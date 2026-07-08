@@ -83,6 +83,12 @@ pub struct Response {
     /// Whether all local users have forgotten the room.
     #[serde(deserialize_with = "crate::serde::bool_or_uint")]
     pub forgotten: bool,
+
+    /// Whether the room has been replaced by a tombstone event.
+    pub tombstoned: bool,
+
+    /// The room that replaces this one, taken from the tombstone event.
+    pub replacement_room: Option<OwnedRoomId>,
 }
 
 impl Request {
@@ -115,6 +121,8 @@ impl Response {
             state_events: uint!(0),
             room_type: None,
             forgotten: false,
+            tombstoned: false,
+            replacement_room: None,
         }
     }
 }
