@@ -23,9 +23,13 @@ pub struct Request {
     pub erase: bool,
 }
 
-#[derive(Default)]
 #[response]
-pub struct Response {}
+pub struct Response {
+    /// Result of unbinding the user's third-party IDs from the identity server.
+    ///
+    /// Typically `"success"` or `"no-support"`.
+    pub id_server_unbind_result: String,
+}
 
 impl Request {
     /// Creates a `Request` with the given user ID.
@@ -35,8 +39,8 @@ impl Request {
 }
 
 impl Response {
-    /// Creates an empty `Response`.
-    pub fn new() -> Self {
-        Self {}
+    /// Creates a `Response` with the given identity-server unbind result.
+    pub fn new(id_server_unbind_result: String) -> Self {
+        Self { id_server_unbind_result }
     }
 }

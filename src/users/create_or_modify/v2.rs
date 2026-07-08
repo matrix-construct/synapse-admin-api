@@ -1,7 +1,7 @@
 //! [PUT /_synapse/admin/v2/users/:user_id](https://github.com/element-hq/synapse/blob/master/docs/admin_api/user_admin_api.md#create-or-modify-account)
 
 use ruma::{
-    OwnedUserId,
+    JsOption, OwnedUserId,
     api::{auth_scheme::AccessToken, metadata, request, response},
     thirdparty::Medium,
 };
@@ -24,7 +24,14 @@ pub struct Request {
 
     /// This is an optional parameter. Add this parameter to create an account or set this
     /// password as new one for an existing account.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub password: Option<String>,
+
+    /// Whether to log the user out of all their devices when the password is changed.
+    ///
+    /// Only has an effect when a password is provided. Defaults to true.
+    #[serde(default = "ruma::serde::default_true", skip_serializing_if = "ruma::serde::is_true")]
+    pub logout_devices: bool,
 
     // NOTE: Server explodes if attributes are not omitted but specified as null, like the default
     // Serde case.
@@ -60,6 +67,19 @@ pub struct Request {
     /// Defaults to false, or the current value if user already exists.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub locked: Option<bool>,
+
+    /// The Synapse user type of the account (e.g. `support`, `bot`).
+    ///
+    /// This is tri-state: absent leaves the current value untouched, an explicit null clears it,
+    /// and a value sets it.
+    #[serde(default, skip_serializing_if = "ruma::JsOption::is_undefined")]
+    pub user_type: JsOption<String>,
+
+    /// Whether the account should be approved.
+    ///
+    /// Only parsed when MSC3866 support is enabled on the server.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub approved: Option<bool>,
 }
 
 #[response]
@@ -88,6 +108,7 @@ impl Request {
         Self {
             user_id,
             password,
+            logout_devices: true,
             displayname: None,
             threepids: None,
             external_ids: None,
@@ -95,6 +116,8 @@ impl Request {
             admin: None,
             deactivated: None,
             locked: None,
+            user_type: JsOption::Undefined,
+            approved: None,
         }
     }
 }
@@ -115,4 +138,51 @@ pub struct ThirdPartyIdentifier {
 
     /// The medium of third party identifier.
     pub medium: Medium,
+}
+
+#[cfg(test)]
+mod tests {
+    use ruma::JsOption;
+    use serde::{Deserialize, Serialize};
+    use serde_json::json;
+
+    /// Mirrors the tri-state `user_type` field so the serde attributes can be exercised
+    /// independently of the ruma request macro.
+    #[derive(Debug, PartialEq, Serialize, Deserialize)]
+    struct UserTypeField {
+        #[serde(default, skip_serializing_if = "ruma::JsOption::is_undefined")]
+        user_type: JsOption<String>,
+    }
+
+    #[test]
+    fn user_type_tri_state_serializes() {
+        let undefined = UserTypeField { user_type: JsOption::Undefined };
+        assert_eq!(serde_json::to_value(&undefined).unwrap(), json!({}));
+
+        let null = UserTypeField { user_type: JsOption::Null };
+        assert_eq!(serde_json::to_value(&null).unwrap(), json!({ "user_type": null }));
+
+        let some = UserTypeField { user_type: JsOption::Some("bot".to_owned()) };
+        assert_eq!(serde_json::to_value(&some).unwrap(), json!({ "user_type": "bot" }));
+    }
+
+    #[test]
+    fn user_type_tri_state_deserializes() {
+        assert_eq!(
+            serde_json::from_value::<UserTypeField>(json!({})).unwrap().user_type,
+            JsOption::Undefined
+        );
+        assert_eq!(
+            serde_json::from_value::<UserTypeField>(json!({ "user_type": null }))
+                .unwrap()
+                .user_type,
+            JsOption::Null
+        );
+        assert_eq!(
+            serde_json::from_value::<UserTypeField>(json!({ "user_type": "bot" }))
+                .unwrap()
+                .user_type,
+            JsOption::Some("bot".to_owned())
+        );
+    }
 }
