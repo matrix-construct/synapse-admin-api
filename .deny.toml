@@ -9,6 +9,9 @@ exclude = [
 
 [advisories]
 version = 2
+ignore = [
+    "RUSTSEC-2026-0215", # smallstr is unmaintained; its alternatives fix the inline capacity our string types choose.
+]
 
 [licenses]
 version = 2
@@ -40,3 +43,4 @@ deny = [
 [sources]
 unknown-registry = "deny"
 unknown-git = "deny"
+allow-git = ["https://github.com/matrix-construct/ruma"]

@@ -6,8 +6,9 @@ env:
   NIGHTLY: nightly-2026-04-17
 
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, tuwunel-changes]
   pull_request:
     branches: [main]
 
