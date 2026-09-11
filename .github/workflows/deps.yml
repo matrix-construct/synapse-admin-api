@@ -5,8 +5,9 @@ env:
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
 
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, tuwunel-changes]
   pull_request:
     branches: [main]
 
