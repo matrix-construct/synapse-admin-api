@@ -8,12 +8,12 @@
 use ruma::{
     OwnedDeviceId,
     api::{
-        EndpointError, IncomingResponse, OutgoingResponse,
+        EmptyBody, IncomingResponse, OutgoingResponse,
         auth_scheme::NoAuthentication,
-        error::{Error, FromHttpResponseError, IntoHttpError},
+        error::{DeserializationError, Error, IntoHttpError},
         metadata, request,
     },
-    exports::{bytes::BufMut, http},
+    exports::http,
 };
 
 metadata! {
@@ -60,31 +60,42 @@ impl Response {
 }
 
 impl OutgoingResponse for Response {
-    fn try_into_http_response<T: Default + BufMut>(
-        self,
-    ) -> Result<http::Response<T>, IntoHttpError> {
+    type Body = EmptyBody<false>;
+
+    fn try_into_http_response_inner(self) -> Result<http::Response<Self::Body>, IntoHttpError> {
         let status = if self.created { http::StatusCode::CREATED } else { http::StatusCode::OK };
 
-        let mut body = T::default();
-        body.put_slice(b"{}");
-        http::Response::builder()
-            .status(status)
-            .header(http::header::CONTENT_TYPE, "application/json")
-            .body(body)
-            .map_err(Into::into)
+        http::Response::builder().status(status).body(EmptyBody).map_err(Into::into)
     }
 }
 
 impl IncomingResponse for Response {
     type EndpointError = Error;
 
-    fn try_from_http_response<T: AsRef<[u8]>>(
-        response: http::Response<T>,
-    ) -> Result<Self, FromHttpResponseError<Self::EndpointError>> {
-        if response.status().as_u16() >= 400 {
-            return Err(FromHttpResponseError::Server(Error::from_http_response(response)));
-        }
-
+    fn try_from_http_response_inner(
+        response: http::Response<&[u8]>,
+    ) -> Result<Self, DeserializationError> {
         Ok(Self { created: response.status() == http::StatusCode::CREATED })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use ruma::api::{IncomingResponseExt, OutgoingResponseExt};
+
+    use super::Response;
+
+    #[test]
+    fn response_wire() {
+        for (created, status) in [(true, 201), (false, 200)] {
+            let response = Response::new(created).try_into_http_response::<Vec<u8>>().unwrap();
+
+            assert_eq!(response.status(), status);
+            assert_eq!(response.body(), b"{}");
+            assert_eq!(response.headers()["content-type"], "application/json");
+            let decoded = Response::try_from_http_response(response.map(|_| &b"{}"[..])).unwrap();
+
+            assert_eq!(decoded.created, created);
+        }
     }
 }

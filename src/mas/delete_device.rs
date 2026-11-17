@@ -7,12 +7,12 @@
 use ruma::{
     OwnedDeviceId,
     api::{
-        EndpointError, IncomingResponse, OutgoingResponse,
+        EmptyBody, IncomingResponse, OutgoingResponse,
         auth_scheme::NoAuthentication,
-        error::{Error, FromHttpResponseError, IntoHttpError},
+        error::{DeserializationError, Error, IntoHttpError},
         metadata, request,
     },
-    exports::{bytes::BufMut, http},
+    exports::http,
 };
 
 metadata! {
@@ -51,12 +51,12 @@ impl Response {
 }
 
 impl OutgoingResponse for Response {
-    fn try_into_http_response<T: Default + BufMut>(
-        self,
-    ) -> Result<http::Response<T>, IntoHttpError> {
+    type Body = EmptyBody;
+
+    fn try_into_http_response_inner(self) -> Result<http::Response<Self::Body>, IntoHttpError> {
         http::Response::builder()
             .status(http::StatusCode::NO_CONTENT)
-            .body(T::default())
+            .body(EmptyBody)
             .map_err(Into::into)
     }
 }
@@ -64,13 +64,26 @@ impl OutgoingResponse for Response {
 impl IncomingResponse for Response {
     type EndpointError = Error;
 
-    fn try_from_http_response<T: AsRef<[u8]>>(
-        response: http::Response<T>,
-    ) -> Result<Self, FromHttpResponseError<Self::EndpointError>> {
-        if response.status().as_u16() >= 400 {
-            return Err(FromHttpResponseError::Server(Error::from_http_response(response)));
-        }
-
+    fn try_from_http_response_inner(
+        _response: http::Response<&[u8]>,
+    ) -> Result<Self, DeserializationError> {
         Ok(Self {})
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use ruma::api::{IncomingResponseExt, OutgoingResponseExt};
+
+    use super::Response;
+
+    #[test]
+    fn response_wire() {
+        let response = Response::new().try_into_http_response::<Vec<u8>>().unwrap();
+
+        assert_eq!(response.status(), 204);
+        assert!(response.body().is_empty());
+        assert!(!response.headers().contains_key("content-type"));
+        assert!(Response::try_from_http_response(response.map(|_| &b""[..])).is_ok());
     }
 }
